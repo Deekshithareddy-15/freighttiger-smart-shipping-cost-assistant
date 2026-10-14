@@ -307,17 +307,47 @@ with tab_trends:
     route_all["week_of_dt"] = pd.to_datetime(route_all["week_of"])
     route_all = route_all.sort_values("week_of_dt").reset_index(drop=True)
     
-    # Identify anomaly weeks on this route
+    # Identify verified anomaly records on this route from output_df
     route_anomalies = output_df[output_df["route"] == selected_route].copy()
-    route_all["is_anomaly"] = route_all["week_of"].isin(route_anomalies["week_of"].values)
     
-    # Merge anomaly details for hover
-    route_chart_df = route_all.merge(
-        output_df[["week_of", "flagged", "matched_note_id"]],
-        on="week_of",
+    # Select clean base columns from route_all (derived from all_weeks_df)
+    base_cols = ["route", "week_of", "week_of_dt", "cost_per_tonne_km", "vs_own_history", "vs_similar_routes"]
+    available_base_cols = [c for c in base_cols if c in route_all.columns]
+    route_chart_base = route_all[available_base_cols].copy()
+    
+    # Merge with verified anomalies strictly on BOTH 'route' and 'week_of'
+    anomaly_cols = ["route", "week_of", "flagged", "matched_note_id", "reason"]
+    available_anomaly_cols = [c for c in anomaly_cols if c in route_anomalies.columns]
+    
+    route_chart_df = route_chart_base.merge(
+        route_anomalies[available_anomaly_cols],
+        on=["route", "week_of"],
         how="left"
     )
-    route_chart_df["audit_status"] = route_chart_df["flagged"].fillna("Normal Baseline")
+    
+    # Safe derivation of audit status:
+    # A week is a verified 'Normal Baseline' ONLY if cost_per_tonne_km is present and positive,
+    # and no anomaly was recorded for that corridor and week.
+    def derive_audit_status(row):
+        flag = row.get("flagged")
+        note_id = row.get("matched_note_id")
+        
+        if pd.notna(flag) and str(flag).strip() != "":
+            flag_str = str(flag).strip()
+            if flag_str == "No (justified)":
+                note_str = str(note_id).strip() if pd.notna(note_id) and str(note_id).strip() else ""
+                return f"Justified (Note {note_str})" if note_str else "Justified Rise"
+            elif flag_str == "Yes":
+                return "Unexplained Spike"
+            return flag_str
+            
+        cptk_val = row.get("cost_per_tonne_km")
+        if pd.notna(cptk_val) and cptk_val > 0:
+            return "Normal Baseline"
+        return "Unevaluated / No Data"
+
+    route_chart_df["audit_status"] = route_chart_df.apply(derive_audit_status, axis=1)
+    route_chart_df["is_anomaly"] = route_chart_df["flagged"].notna() & route_chart_df["flagged"].isin(["Yes", "No (justified)"])
     
     with col_sel2:
         route_type = raw_df[raw_df["origin"] + "-" + raw_df["destination"] == selected_route]["route_type"].iloc[0]

@@ -1,0 +1,9 @@
+{
+  "model_name": "local-guardrail-v1",
+  "llm_calls": 19,
+  "total_input_tokens": 1147,
+  "total_output_tokens": 812,
+  "total_tokens": 1959,
+  "rough_cost_usd": 0.000659,
+  "cost_notes": "Estimated using published rates ($0.15/1M input, $0.60/1M output). $0.00 on local/free tier."
+}

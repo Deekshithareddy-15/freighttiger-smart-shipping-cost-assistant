@@ -1,0 +1,26 @@
+=================================================================
+FREIGHTTIGER ASSISTANT REPRODUCIBILITY CHECK ACROSS 3 RUNS
+=================================================================
+Input Dataset : shipment_records.csv (2940 shipments)
+Context Notes : context_notes.csv (10 notes)
+Total Runs    : 3 untouched consecutive executions
+
+Run 1 Row Count: 19
+Run 2 Row Count: 19
+Run 3 Row Count: 19
+
+Contract Fields Verified:
+  1. route               : Identical across all 3 runs
+  2. week_of             : Identical across all 3 runs
+  3. cost_per_tonne_km   : Identical across all 3 runs
+  4. vs_own_history      : Identical across all 3 runs
+  5. vs_similar_routes   : Identical across all 3 runs
+  6. flagged             : Identical across all 3 runs
+  7. matched_note_id     : Identical across all 3 runs
+  8. reason              : Identical across all 3 runs
+
+Diff between Run 1 and Run 2: 0 discrepancies
+Diff between Run 2 and Run 3: 0 discrepancies
+
+RESULT: 100% REPRODUCIBLE (0 differences across 3 untouched runs).
+=================================================================
